@@ -7,11 +7,11 @@ Ce document décrit le script `genMV.sh` qui automatise la création, le listing
 
 
 ## Points clés implémentés
-1. Étape 1 – Création VM Debian1, RAM 4096 Mo, DD 64 GiB, NAT, PXE, pause, suppression  
-2. Étape 2 – Vérification doublons  
-3. Étape 3 – Configuration PXE/ISO  
-4. Étape 4 – Gestion arguments L/N/S/D/A  
-5. Étape 5 – Métadonnées et parsing
+Étape 1 – Création VM Debian1, RAM 4096 Mo, DD 64 GiB, NAT, PXE, pause, suppression  
+Étape 2 – Vérification doublons  
+Étape 3 – Configuration PXE/ISO  
+Étape 4 – Gestion arguments L/N/S/D/A  
+Étape 5 – Métadonnées et parsing
 
 ## Utilisation rapide
 
