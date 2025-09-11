@@ -1,95 +1,82 @@
 #!/bin/bash
+# genMV.sh – Version très simple avec arrêts sur erreur
 
-# Variables configurables
+# Variables
 RAM=4096
 DISK=64
-OS_TYPE="Debian_64"
-ISO_PATH="$HOME/iso/debian-netinst.iso"
-VM_DIR="$HOME/VirtualBox VMs"
+ISO="$HOME/iso/debian-netinst.iso"
 
 # Aide
 if [ $# -lt 1 ]; then
-  echo "Usage: $0 {L|N|S|D|A} [nom_vm]"
+  echo "Usage: $0 {L|N|S|D|A} [VM_NAME]" >&2
   exit 1
 fi
 
-ACTION="$1"
-NAME="$2"
+CMD="$1"
+VM="$2"
 
-# Vérifie existence
+# Vérifier existence
 exists() {
   VBoxManage showvminfo "$1" &>/dev/null
 }
 
 # Créer VM
 create() {
-  if exists "$1"; then
-    delete "$1"
-  fi
-  VBoxManage createvm --name "$1" --ostype "$OS_TYPE" --register
-  VBoxManage modifyvm "$1" --memory $RAM --nic1 nat --boot1 net
-  VBoxManage storagectl "$1" --name SATA --add sata --controller IntelAhci
-  VBoxManage createmedium disk --filename "$VM_DIR/$1/$1.vdi" --size $((DISK*1024)) --format VDI
-  VBoxManage storageattach "$1" --storagectl SATA --port 0 --device 0 --type hdd --medium "$VM_DIR/$1/$1.vdi"
-  [ -f "$ISO_PATH" ] && VBoxManage storageattach "$1" --storagectl SATA --port 1 --device 0 --type dvddrive --medium "$ISO_PATH"
-  # Métadonnées
-  DATE=$(date "+%Y-%m-%d_%H:%M:%S")
-  VBoxManage setextradata "$1" creation.date "$DATE"
-  VBoxManage setextradata "$1" creation.user "$USER"
-  echo "VM $1 créée. Vérifiez dans la GUI puis appuyez sur Entrée."
-  read
-  delete "$1"
+  [ -z "$VM" ] && { echo "Erreur: nom requis" >&2; exit 1; }
+  exists "$VM" && delete
+  VBoxManage createvm --name "$VM" --ostype "Debian_64" --register \
+    || { echo "Erreur createvm" >&2; exit 1; }
+  VBoxManage modifyvm "$VM" --memory $RAM --nic1 nat --boot1 net \
+    || { echo "Erreur modifyvm" >&2; exit 1; }
+  VBoxManage storagectl "$VM" --name SATA --add sata --controller IntelAhci \
+    || { echo "Erreur storagectl" >&2; exit 1; }
+  VBoxManage createmedium disk --filename "$VM.vdi" --size $((DISK*1024)) \
+    || { echo "Erreur createmedium" >&2; exit 1; }
+  VBoxManage storageattach "$VM" --storagectl SATA --port 0 --device 0 --type hdd --medium "$VM.vdi" \
+    || { echo "Erreur storageattach disque" >&2; exit 1; }
+  [ -f "$ISO" ] && VBoxManage storageattach "$VM" --storagectl SATA --port 1 --device 0 --type dvddrive --medium "$ISO" \
+    || echo "ISO non trouvée"
+  echo "VM $VM créée."
 }
 
 # Supprimer VM
 delete() {
-  if exists "$1"; then
-    VBoxManage controlvm "$1" poweroff &>/dev/null
-    sleep 1
-    VBoxManage unregistervm "$1" --delete
-    echo "VM $1 supprimée."
-  else
-    echo "VM $1 introuvable."
-  fi
+  [ -z "$VM" ] && { echo "Erreur: nom requis" >&2; exit 1; }
+  exists "$VM" || { echo "Erreur: VM introuvable" >&2; exit 1; }
+  VBoxManage unregistervm "$VM" --delete \
+    || { echo "Erreur unregistervm" >&2; exit 1; }
+  echo "VM $VM supprimée."
 }
 
 # Démarrer VM
 start() {
-  if exists "$1"; then
-    VBoxManage startvm "$1" --type headless
-  else
-    echo "VM $1 introuvable."
-  fi
+  [ -z "$VM" ] && { echo "Erreur: nom requis" >&2; exit 1; }
+  exists "$VM" || { echo "Erreur: VM introuvable" >&2; exit 1; }
+  VBoxManage startvm "$VM" --type headless \
+    || { echo "Erreur startvm" >&2; exit 1; }
+  echo "VM $VM démarrée."
 }
 
 # Arrêter VM
 stop() {
-  if exists "$1"; then
-    VBoxManage controlvm "$1" acpipowerbutton
-  else
-    echo "VM $1 introuvable."
-  fi
+  [ -z "$VM" ] && { echo "Erreur: nom requis" >&2; exit 1; }
+  exists "$VM" || { echo "Erreur: VM introuvable" >&2; exit 1; }
+  VBoxManage controlvm "$VM" acpipowerbutton \
+    || { echo "Erreur arrêt ACPI" >&2; exit 1; }
+  echo "Signal arrêt envoyé."
 }
 
 # Lister VMs
 list() {
-  VBoxManage list vms > /tmp/vms.txt
-  while read -r line; do
-    vm=$(echo "$line" | cut -d'"' -f2)
-    echo "- $vm"
-    date=$(VBoxManage getextradata "$vm" creation.date 2>/dev/null | cut -d' ' -f2-)
-    user=$(VBoxManage getextradata "$vm" creation.user 2>/dev/null | cut -d' ' -f2-)
-    [ -n "$date" ] && echo "  Date: $date"
-    [ -n "$user" ] && echo "  User: $user"
-  done < /tmp/vms.txt
-  rm /tmp/vms.txt
+  VBoxManage list vms | cut -d'"' -f2 \
+    || { echo "Erreur list vms" >&2; exit 1; }
 }
 
-case "$ACTION" in
+case "$CMD" in
+  N) create ;;
+  S) delete ;;
+  D) start ;;
+  A) stop ;;
   L) list ;;
-  N) [ -n "$NAME" ] && create "$NAME" || echo "Nom requis" ;;
-  S) [ -n "$NAME" ] && delete "$NAME" || echo "Nom requis" ;;
-  D) [ -n "$NAME" ] && start "$NAME" || echo "Nom requis" ;;
-  A) [ -n "$NAME" ] && stop "$NAME" || echo "Nom requis" ;;
-  *) echo "Commande invalide"; exit 1 ;;
+  *) echo "Commande invalide" >&2; exit 1 ;;
 esac
