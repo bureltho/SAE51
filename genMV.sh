@@ -1,6 +1,4 @@
 #!/bin/bash
-# genMV.sh – Version très simple avec arrêts sur erreur
-
 # Variables
 RAM=4096
 DISK=64
