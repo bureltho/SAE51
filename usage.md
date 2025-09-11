@@ -34,4 +34,8 @@ chmod +x genMV.sh
    **Solution** : Vérification et suppression automatique en début de création.
 
 
+**Permissions d’exécution manquantes**
+   Au lancement du script, le message Permission denied apparaissait. Le script n’était pas marqué comme exécutable.
+   **Solution** : Exécuter chmod +x genMV.sh pour ajouter le bit d’exécution et permettre son lancement direct.
+
 
