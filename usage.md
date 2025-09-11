@@ -13,10 +13,25 @@ Ce document décrit le script `genMV.sh` qui automatise la création, le listing
 4. Étape 4 – Gestion arguments L/N/S/D/A  
 5. Étape 5 – Métadonnées et parsing
 
-## Limites et améliorations possibles
-- Configuration manuelle TFTP  
-- Automatisation preseed  
-- Autologon  
-- Réseau avancé  
-- Interface web  
+## Utilisation rapide
+
+chmod +x genMV.sh
+./genMV.sh <commande> [nom_vm]
+
+| Commande | Description                         |
+|----------|-------------------------------------|
+| L        | Lister les VMs avec métadonnées     |
+| N <nom>  | Créer une nouvelle VM `<nom>`       |
+| S <nom>  | Supprimer la VM `<nom>`             |
+| D <nom>  | Démarrer la VM `<nom>`              |
+| A <nom>  | Arrêter la VM `<nom>`               |
+
+
+## Problèmes rencontrés
+
+**Conflit de noms de VM**  
+   Lors de créations répétées, `createvm` échouait si une VM du même nom existait.  
+   **Solution** : Vérification et suppression automatique en début de création.
+
+
 
