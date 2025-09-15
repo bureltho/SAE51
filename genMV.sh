@@ -3,25 +3,24 @@
 RAM=4096
 DISK=64
 ISO="$HOME/iso/debian-netinst.iso"
-
 # Aide
 if [ $# -lt 1 ]; then
   echo "Usage: $0 {L|N|S|D|A} [VM_NAME]" >&2
   exit 1
 fi
-
 CMD="$1"
 VM="$2"
-
 # Vérifier existence
 exists() {
   VBoxManage showvminfo "$1" &>/dev/null
 }
-
 # Créer VM
 create() {
   [ -z "$VM" ] && { echo "Erreur: nom requis" >&2; exit 1; }
-  exists "$VM" && delete
+  if exists "$VM"; then
+    echo "Erreur: la VM '$VM' existe déjà." >&2
+    exit 1
+  fi
   VBoxManage createvm --name "$VM" --ostype "Debian_64" --register \
     || { echo "Erreur createvm" >&2; exit 1; }
   VBoxManage modifyvm "$VM" --memory $RAM --nic1 nat --boot1 net \
@@ -36,7 +35,6 @@ create() {
     || echo "ISO non trouvée"
   echo "VM $VM créée."
 }
-
 # Supprimer VM
 delete() {
   [ -z "$VM" ] && { echo "Erreur: nom requis" >&2; exit 1; }
@@ -45,7 +43,6 @@ delete() {
     || { echo "Erreur unregistervm" >&2; exit 1; }
   echo "VM $VM supprimée."
 }
-
 # Démarrer VM
 start() {
   [ -z "$VM" ] && { echo "Erreur: nom requis" >&2; exit 1; }
@@ -54,7 +51,6 @@ start() {
     || { echo "Erreur startvm" >&2; exit 1; }
   echo "VM $VM démarrée."
 }
-
 # Arrêter VM
 stop() {
   [ -z "$VM" ] && { echo "Erreur: nom requis" >&2; exit 1; }
@@ -63,13 +59,11 @@ stop() {
     || { echo "Erreur arrêt ACPI" >&2; exit 1; }
   echo "Signal arrêt envoyé."
 }
-
 # Lister VMs
 list() {
   VBoxManage list vms | cut -d'"' -f2 \
     || { echo "Erreur list vms" >&2; exit 1; }
 }
-
 case "$CMD" in
   N) create ;;
   S) delete ;;
