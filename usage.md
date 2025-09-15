@@ -15,8 +15,8 @@ Ce document décrit le script `genMV.sh` qui automatise la création, le listing
 
 ## Utilisation rapide
 
-'chmod +x genMV.sh'
-'./genMV.sh <commande> [nom_vm]'
+`<chmod +x genMV.sh>` 
+`<./genMV.sh <commande> [nom_vm]>` 
 
 | Commande | Description                         |
 |----------|-------------------------------------|
